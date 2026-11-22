@@ -123,9 +123,13 @@ fs.writeFileSync(
 const snapJs = buildSnapshotJs(derive);
 fs.writeFileSync(path.join(outDir, 'dashboard', 'snapshot.js'), snapJs);
 
-fs.writeFileSync(path.join(outDir, 'dossier.json'), buildDossier(outDir, { text_max_bytes: 65536 }));
+const dossierJson = buildDossier(outDir, { text_max_bytes: 65536 });
+const dossierText = JSON.parse(Buffer.from(dossierJson).toString('utf8')).text;
+const dossierBytes = Buffer.byteLength(dossierText, 'utf8');
+if (dossierText.includes('[Cut at')) fail(`dossier text cut at ${dossierBytes} bytes, content lost`);
+fs.writeFileSync(path.join(outDir, 'dossier.json'), dossierJson);
 process.stderr.write(
   `token radar: wrote board.json (${board.length} rows), data.js, dashboard (${dashFiles} files), ` +
-    `screenshots (${shotFiles} images), dossier.json\n` +
+    `screenshots (${shotFiles} images), dossier.json (${dossierBytes} bytes)\n` +
     `token radar: snapshot ${snapJs.length} bytes, deposits priced for ${rows.filter((r) => r.deposit25 !== null).length} of ${rows.length} rows\n`,
 );
